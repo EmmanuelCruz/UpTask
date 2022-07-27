@@ -1,0 +1,4 @@
+# Variables de entorno con credenciales del proyecto
+/backend/.env
+
+/backend/node_modules

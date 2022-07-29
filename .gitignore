@@ -2,3 +2,6 @@
 /backend/.env
 
 /backend/node_modules
+
+# Variables de entorno para el front-end
+/front-end/.env

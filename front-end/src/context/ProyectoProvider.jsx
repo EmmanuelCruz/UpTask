@@ -10,20 +10,19 @@ const ProyectoProvider = ({ children }) => {
   const [alerta, setAlerta] = useState({})
   const [proyectoObtenido, setProyectoObtenido] = useState({})
   const [cargando, setCargando] = useState(false)
+  const [modalFormularioTarea, setModalFormularioTarea] = useState(false)
+  const [tarea, setTarea] = useState({})
+  const [modalEliminarTarea, setModalEliminarTarea] = useState(false)
 
   const navigate = useNavigate()
 
   useEffect(() => {
     const obtenerProyectos = async () => {
-      console.log("Entra a obtener")
       try {
         const token = localStorage.getItem('token')
-        console.log(token)
         if (!token) {
           return
         }
-
-        console.log("Sí pasa")
 
         const config = {
           headers: {
@@ -39,8 +38,6 @@ const ProyectoProvider = ({ children }) => {
         console.error(error);
       }
     }
-
-    console.log("Entra a obtener")
 
     obtenerProyectos()
   }, [])
@@ -73,7 +70,7 @@ const ProyectoProvider = ({ children }) => {
       const { data } = await clienteaxios.delete(`/proyectos/${id}`, config)
 
       const nuevosProyectos = proyecto.filter(pActual => pActual._id !== id)
-      setProyecto(nuevosProyectos )
+      setProyecto(nuevosProyectos)
 
       setAlerta({
         msg: 'Proyecto eliminado correctamente',
@@ -185,6 +182,90 @@ const ProyectoProvider = ({ children }) => {
     }
   }
 
+  const submitTarea = async tarea => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        return
+      }
+
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        }
+      }
+
+      if (tarea.id) {
+        // Editar
+        const { data } = await clienteaxios.put(`/tareas/${tarea.id}`, tarea, config)
+
+        const proyectoActualizado = { ...proyectoObtenido }
+        proyectoActualizado.tareas = proyectoActualizado.tareas.map(tareaState => tareaState._id === data._id ? data : tareaState)
+        setProyectoObtenido(proyectoActualizado)
+      } else {
+        // Crear nueva
+        const { data } = await clienteaxios.post('/tareas', tarea, config)
+
+        // Agregar una copia de la tarea en el state
+        const proyectoActualizado = { ...proyectoObtenido }
+        proyectoActualizado.tareas = [...proyectoObtenido.tareas, data]
+        setProyectoObtenido(proyectoActualizado)
+      }
+
+      setModalFormularioTarea(false)
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const handleModalEditarTarea = tarea => {
+    setTarea(tarea)
+    setModalFormularioTarea(true)
+  }
+
+  const handleModalFormularioTarea = modal => {
+    setModalFormularioTarea(modal)
+    setTarea({})
+  }
+
+  const handleEliminarTarea = tarea => {
+    setModalEliminarTarea(!modalEliminarTarea)
+    setTarea(tarea)
+  }
+
+  const eliminarTarea = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        return
+      }
+
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        }
+      }
+
+      const { data } = await clienteaxios.delete(`/tareas/${tarea._id}`, config)
+      setAlerta({
+        msg: data.msg,
+        error: false
+      })
+      const proyectoActualizado = { ...proyectoObtenido }
+      proyectoActualizado.tareas = proyectoActualizado.tareas.filter(tareaState => tareaState._id !== tarea._id)
+      setProyectoObtenido(proyectoActualizado)
+      setModalEliminarTarea(false)
+      setTarea({})
+      setTimeout(() => {
+        setAlerta({})
+      }, 3000);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   return (
     <ProyectoContext.Provider
       value={{
@@ -195,7 +276,15 @@ const ProyectoProvider = ({ children }) => {
         obtenerProyecto,
         proyectoObtenido,
         cargando,
-        eliminarProyecto
+        eliminarProyecto,
+        modalFormularioTarea,
+        handleModalFormularioTarea,
+        submitTarea,
+        handleModalEditarTarea,
+        tarea,
+        modalEliminarTarea,
+        handleEliminarTarea,
+        eliminarTarea
       }}
     >
       {children}

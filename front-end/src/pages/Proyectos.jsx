@@ -4,8 +4,6 @@ import Proyecto from "../components/Proyecto"
 const Proyectos = () => {
   const { proyecto } = useProyecto()
 
-  console.log(proyecto)
-
   return (
     <>
       <h1 className="text-4xl font-black">Proyectos</h1>

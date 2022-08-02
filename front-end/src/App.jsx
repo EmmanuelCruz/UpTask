@@ -12,6 +12,7 @@ import Proyectos from './pages/Proyectos';
 import NuevoProyecto from './pages/NuevoProyecto';
 import ProyectoId from './pages/ProyectoId';
 import EditarProyecto from './pages/EditarProyecto';
+import NuevoColaborador from './pages/NuevoColaborador';
 
 function App() {
 
@@ -31,6 +32,7 @@ function App() {
             <Route path='/proyectos' element={<RutaProtegida />}>
               <Route index element={<Proyectos />} />
               <Route path='nuevo-proyecto' element={<NuevoProyecto />} />
+              <Route path='nuevo-colaborador/:id' element={<NuevoColaborador />} />
               <Route path=':id' element={<ProyectoId />} />
               <Route path='editar/:id' element={<EditarProyecto />} />
             </Route>

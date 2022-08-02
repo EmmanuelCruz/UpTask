@@ -6,7 +6,8 @@ import {
   editarProyecto,
   eliminarProyecto,
   agregarColaborador,
-  eliminarColaborador
+  eliminarColaborador,
+  buscarColaborador
  } from '../controllers/proyectoController.js';
 import checkAuth from '../middleware/checkAuth.js';
 
@@ -16,7 +17,8 @@ router.route('').get(checkAuth, obtenerProyectos).post(checkAuth, nuevoProyecto)
 
 router.route('/:id').get(checkAuth, obtenerProyecto).put(checkAuth, editarProyecto).delete(checkAuth, eliminarProyecto)
 
-router.post('/agregar-colaborador/:id', checkAuth, agregarColaborador)
-router.post('/agregar-colaborador/:id', checkAuth, eliminarColaborador)
+router.post('/colaboradores', checkAuth, buscarColaborador)
+router.post('/colaboradores/:id', checkAuth, agregarColaborador)
+router.post('/eliminar-colaborador/:id', checkAuth, eliminarColaborador)
 
 export default router

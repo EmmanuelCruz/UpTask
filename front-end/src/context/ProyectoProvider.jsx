@@ -1,6 +1,9 @@
 import { useState, createContext, useEffect } from "react";
 import clienteaxios from "../config/clienteAxios";
 import { useNavigate } from "react-router-dom";
+import io from 'socket.io-client'
+
+let socket;
 
 const ProyectoContext = createContext()
 
@@ -43,6 +46,10 @@ const ProyectoProvider = ({ children }) => {
     }
 
     obtenerProyectos()
+  }, [])
+
+  useEffect(() => {
+    socket = io(import.meta.env.VITE_BACKEND)
   }, [])
 
   const submitProyecto = async proyectoNuevo => {
@@ -203,17 +210,14 @@ const ProyectoProvider = ({ children }) => {
         // Editar
         const { data } = await clienteaxios.put(`/tareas/${tarea.id}`, tarea, config)
 
-        const proyectoActualizado = { ...proyectoObtenido }
-        proyectoActualizado.tareas = proyectoActualizado.tareas.map(tareaState => tareaState._id === data._id ? data : tareaState)
-        setProyectoObtenido(proyectoActualizado)
+        // Socket
+        socket.emit('actualizar-tarea', data)
       } else {
         // Crear nueva
         const { data } = await clienteaxios.post('/tareas', tarea, config)
 
-        // Agregar una copia de la tarea en el state
-        const proyectoActualizado = { ...proyectoObtenido }
-        proyectoActualizado.tareas = [...proyectoObtenido.tareas, data]
-        setProyectoObtenido(proyectoActualizado)
+        // Socket IO
+        socket.emit('nueva-tarea', data)
       }
 
       setModalFormularioTarea(false)
@@ -257,11 +261,11 @@ const ProyectoProvider = ({ children }) => {
         msg: data.msg,
         error: false
       })
-      const proyectoActualizado = { ...proyectoObtenido }
-      proyectoActualizado.tareas = proyectoActualizado.tareas.filter(tareaState => tareaState._id !== tarea._id)
-      setProyectoObtenido(proyectoActualizado)
       setModalEliminarTarea(false)
       setTarea({})
+
+      // Socket io
+      socket.emit('eliminar-tarea', tarea)
       setTimeout(() => {
         setAlerta({})
       }, 3000);
@@ -329,7 +333,7 @@ const ProyectoProvider = ({ children }) => {
         msg: error.response.data.msg,
         error: true
       })
-      console.log(error)
+      console.error(error)
     }
   }
 
@@ -391,18 +395,49 @@ const ProyectoProvider = ({ children }) => {
 
       const { data } = await clienteaxios.post(`/tareas/estado/${id}`, {}, config)
 
-      const proyectoActualizado = {...proyectoObtenido}
-      proyectoActualizado.tareas = proyectoActualizado.tareas.map(tareaS => tareaS._id === data._id ? data : tareaS )
-      setProyectoObtenido(proyectoActualizado)
+      socket.emit('cambiar-estado', data)
       setTarea({})
 
     } catch (error) {
-      console.log(error)
+      console.error(error)
     }
   } 
 
   const handleBuscador = () => {
     setBuscador(!buscador)
+  }
+
+  // Funciones de socket io
+  const submitTareasProyecto = (tarea) => {
+    // Agregar una copia de la tarea en el state
+    const proyectoActualizado = { ...proyectoObtenido }
+    proyectoActualizado.tareas = [...proyectoActualizado.tareas, tarea]
+    setProyectoObtenido(proyectoActualizado)
+  }
+
+  const eliminarTareaProyecto = (tarea) => {
+    const proyectoActualizado = { ...proyectoObtenido }
+    proyectoActualizado.tareas = proyectoActualizado.tareas.filter(tareaState => tareaState._id !== tarea._id)
+    setProyectoObtenido(proyectoActualizado)
+  }
+
+  const actualizarTareaProyecto = tareaActualizada => {
+    const proyectoActualizado = { ...proyectoObtenido }
+    proyectoActualizado.tareas = proyectoActualizado.tareas.map(tareaState => tareaState._id === tareaActualizada._id ? tareaActualizada : tareaState)
+    setProyectoObtenido(proyectoActualizado)
+  }
+
+  const cambiarEstadoTarea = tarea => {
+    const proyectoActualizado = {...proyectoObtenido}
+    proyectoActualizado.tareas = proyectoActualizado.tareas.map(tareaS => tareaS._id === tarea._id ? tarea : tareaS )
+    setProyectoObtenido(proyectoActualizado)
+  }
+
+  // Cierre de sesión
+  const cerrarSesion = () => {
+    setProyecto([])
+    setProyectoObtenido([])
+    setAlerta({})
   }
 
   return (
@@ -432,7 +467,12 @@ const ProyectoProvider = ({ children }) => {
         eliminarColaborador,
         completarTarea,
         buscador,
-        handleBuscador
+        handleBuscador,
+        submitTareasProyecto,
+        eliminarTareaProyecto,
+        actualizarTareaProyecto,
+        cambiarEstadoTarea,
+        cerrarSesion
       }}
     >
       {children}

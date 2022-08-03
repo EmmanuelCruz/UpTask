@@ -1,11 +1,19 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import useProyecto from '../hooks/useProyecto'
+import useAuth from '../hooks/useAuth'
 import Busqueda from './Busqueda'
 
 const Header = () => {
 
-  const {handleBuscador, buscador} = useProyecto()
+  const {handleBuscador, cerrarSesion} = useProyecto()
+  const {cerrarSesionAuth} = useAuth()
+  
+  const handleCerrarSesion = () => {
+    cerrarSesion()
+    cerrarSesionAuth()
+    localStorage.removeItem('token')
+  }
 
   return (
     <header className='px-4 py-5 bg-white border-b'>
@@ -29,6 +37,7 @@ const Header = () => {
 
           <button
             type='button'
+            onClick={handleCerrarSesion}
             className='text-white text-sm hover:bg-sky-700 bg-sky-600 p-3 rounded-md uppercase font-bold'
           >
             Cerrar sesión

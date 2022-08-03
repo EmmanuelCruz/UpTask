@@ -5,3 +5,5 @@
 
 # Variables de entorno para el front-end
 /front-end/.env
+
+/front-end/node_modules
